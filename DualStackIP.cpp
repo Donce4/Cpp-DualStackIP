@@ -15,177 +15,111 @@ private:
     static int objectCount;
     static int nextID;
 
-public:
-    DualStackIP(int version, int *parts, string alias)
-    {
-        this->alias = alias;
-        this->version = version;
+    // New helper functions
 
-        if (version == 4)
+    void allocateParts(int v)
+    {
+        int size = (v == 4) ? 4 : 8;
+        this->parts = new int[size];
+        for (int i = 0; i < size; ++i)
         {
-            for (int i = 0; i < 4; ++i)
+            this->parts[i] = 0;
+        }
+    }
+
+    void validateAndAssign(int v, int *newParts)
+    {
+        int size = (v == 4) ? 4 : 8;
+        int maxVal = (v == 4) ? 255 : 65535;
+        string errorMsg = (v == 4) ? "IPv4 was enterred incorrecly" : "IPv6 was enterred incorrecly";
+
+        for (int i = 0; i < size; ++i)
+        {
+            if (newParts[i] > maxVal || newParts[i] < 0)
             {
-                if (parts[i] > 255 || parts[i] < 0)
-                {
-                    throw invalid_argument("IPv4 was enterred incorrecly");
-                }
-            }
-            this->parts = new int[4];
-            for (int i = 0; i < 4; ++i)
-            {
-                this->parts[i] = parts[i];
+                throw invalid_argument(errorMsg);
             }
         }
-        else if (version == 6)
+        for (int i = 0; i < size; ++i)
         {
-            for (int i = 0; i < 8; ++i)
-            {
-                if (parts[i] > 65535 || parts[i] < 0)
-                {
-                    throw invalid_argument("IPv6 was enterred incorrecly");
-                }
-            }
-            this->parts = new int[8];
-            for (int i = 0; i < 8; ++i)
-            {
-                this->parts[i] = parts[i];
-            }
+            this->parts[i] = newParts[i];
         }
-        else
-        {
-            throw invalid_argument("This version of IP doesn't exist");
-        }
+    }
+
+    void assignID()
+    {
         uniqueID = nextID;
         ++objectCount;
         ++nextID;
+    }
+
+public:
+    DualStackIP(int version, int *parts, string alias)
+    {
+        if (version != 4 && version != 6)
+            throw invalid_argument("This version of IP doesn't exist");
+
+        this->version = version;
+        this->alias = alias;
+
+        allocateParts(version);
+        validateAndAssign(version, parts);
+        assignID();
     }
 
     DualStackIP(int version, string alias)
     {
-        this->alias = alias;
-        this->version = version;
-        if (version == 4)
-        {
-            this->parts = new int[4];
-            for (int i = 0; i < 4; ++i)
-            {
-                this->parts[i] = 0;
-            }
-        }
-        else if (version == 6)
-        {
-            this->parts = new int[8];
-            for (int i = 0; i < 8; ++i)
-            {
-                this->parts[i] = 0;
-            }
-        }
-        else
-        {
+        if (version != 4 && version != 6)
             throw invalid_argument("This version of IP doesn't exist");
-        }
-        uniqueID = nextID;
-        ++objectCount;
-        ++nextID;
+
+        this->version = version;
+        this->alias = alias;
+
+        allocateParts(version);
+        assignID();
     }
+
     ~DualStackIP()
     {
         --objectCount;
         delete[] parts;
     }
 
-public:
     void setAlias(string alias)
     {
         this->alias = alias;
     }
+
     void setVersion(int version)
     {
-        if (version == 4 || version == 6)
-        {
-            if (this->version != version)
-            {
-                if (version == 4)
-                {
-                    int *temp = new int[4];
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        temp[i] = 0;
-                    }
-                    delete[] parts;
-                    parts = temp;
-                    this->version = version;
-                }
-                if (version == 6)
-                {
-                    int *temp = new int[8];
-                    for (int i = 0; i < 8; ++i)
-                    {
-                        temp[i] = 0;
-                    }
-                    delete[] parts;
-                    parts = temp;
-                    this->version = version;
-                }
-            }
-            else
-            {
-                this->version = version;
-            }
-        }
-        else
-        {
+        if (version != 4 && version != 6)
             throw invalid_argument("This version of IP doesn't exist");
+
+        if (this->version != version)
+        {
+            delete[] parts;
+            this->version = version;
+            allocateParts(version);
         }
     }
 
     void setParts(int *newParts)
     {
-        if (this->version == 4)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                if (newParts[i] > 255 || newParts[i] < 0)
-                {
-                    throw invalid_argument("IPv4 was enterred incorrecly");
-                }
-            }
-            for (int i = 0; i < 4; ++i)
-            {
-                this->parts[i] = newParts[i];
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 8; ++i)
-            {
-                if (newParts[i] > 65535 || newParts[i] < 0)
-                {
-                    throw invalid_argument("IPv6 was enterred incorrecly");
-                }
-            }
-            for (int i = 0; i < 8; ++i)
-            {
-                this->parts[i] = newParts[i];
-            }
-        }
+        validateAndAssign(this->version, newParts);
     }
 
     static int getObjectCount()
     {
         return objectCount;
     }
-
     int *getParts()
     {
         return parts;
     }
-
     int getUniqueID()
     {
         return uniqueID;
     }
-
     string getAlias()
     {
         return alias;
@@ -209,6 +143,7 @@ public:
         return ss.str();
     }
 };
+
 int DualStackIP::objectCount = 0;
 int DualStackIP::nextID = 0;
 
@@ -227,8 +162,7 @@ int main()
     assert(d1->getParts()[3] == ip1[3]);
     assert(d1->toString() == "Host1 4 192.168.1.1 0\n");
 
-    // Test2
-
+    // Test 2
     d1->setAlias("Host2");
     assert(d1->getAlias() == "Host2");
 
@@ -256,7 +190,12 @@ int main()
     {
         d1->setVersion(5);
     }
-    catch (invalid_argument)
+
+    catch (const invalid_argument &e)
+    {
+        exceptionThrown = true;
+    }
+    catch (...) // New
     {
         exceptionThrown = true;
     }
@@ -272,7 +211,28 @@ int main()
     int ip6[4] = {212, 59, 1, 100};
     DualStackIP *d5 = new DualStackIP(4, ip6, "Host5");
 
+    // New
     assert(DualStackIP::getObjectCount() == 5);
+
+    int objectsBeforeError = DualStackIP::getObjectCount();
+    bool creationFailed = false;
+    try
+    {
+        int badIp[4] = {999, 999, 999, 999};
+        DualStackIP *failHost = new DualStackIP(4, badIp, "FailHost");
+        delete failHost;
+    }
+    catch (const invalid_argument &e)
+    {
+        creationFailed = true;
+    }
+    catch (...)
+    {
+        creationFailed = true;
+    }
+    assert(creationFailed);
+
+    assert(DualStackIP::getObjectCount() == objectsBeforeError);
 
     delete d1;
     delete d2;
@@ -280,6 +240,7 @@ int main()
     delete d4;
     assert(d5->getUniqueID() == 4);
     delete d5;
+
     assert(DualStackIP::getObjectCount() == 0);
 
     return 0;
