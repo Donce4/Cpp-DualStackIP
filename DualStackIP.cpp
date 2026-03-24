@@ -10,10 +10,12 @@ class DualStackIP
 private:
     int version = 0;
     int *parts = nullptr;
-    string alias = "";
     int uniqueID = 0;
     static int objectCount;
     static int nextID;
+
+public:
+    string alias = "";
 
 public:
     DualStackIP(int version, string alias)
@@ -30,17 +32,17 @@ public:
         setParts(parts);
     }
 
-    ~DualStackIP()
-    {
-        --objectCount;
-        delete[] parts;
-    }
 
     void setAlias(string alias)
     {
         this->alias = alias;
     }
 
+    ~DualStackIP()
+    {
+        --objectCount;
+        delete[] parts;
+    }
     void setVersion(int version)
     {
         if (version != 4 && version != 6)
@@ -177,7 +179,7 @@ int main()
         assert(d1->toString() == "Host1 4 192.168.1.1 0\n");
 
         // Test 2
-        d1->setAlias("Host2");
+        d1->alias = "Host2";
         assert(d1->getAlias() == "Host2");
 
         int ip2[4] = {172, 16, 254, 1};
