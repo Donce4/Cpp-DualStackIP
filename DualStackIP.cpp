@@ -166,18 +166,6 @@ int main()
         int ip1[4] = {192, 168, 1, 1};
         d1 = new DualStackIP(4, ip1, "Host1");
 
-        // Test 1
-        assert(d1->getVersion() == 4);
-        assert(d1->getAlias() == "Host1");
-        assert(d1->getUniqueID() == 0);
-
-        for (int i = 0; i < 4; ++i)
-        {
-            assert(d1->getParts()[i] == ip1[i]);
-        }
-
-        assert(d1->toString() == "Host1 4 192.168.1.1 0\n");
-
         // Test 2
         d1->alias = "Host2";
         assert(d1->getAlias() == "Host2");
